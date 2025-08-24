@@ -71,7 +71,6 @@ pipeline {
             }
         }
         stage('sequential') {
-            stages {
                 stages {
                     stage('60-acm') {
                         steps {
@@ -84,7 +83,6 @@ pipeline {
                         }
                     }
                 }
-            }
         }
     }
     post {
