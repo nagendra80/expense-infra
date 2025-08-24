@@ -7,7 +7,7 @@ pipeline {
     }
     options {
         disableConcurrentBuilds()
-        // timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         ansiColor('xterm')
     }
     parameters {
@@ -19,7 +19,7 @@ pipeline {
                 script{
                     withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                        cd 00-vpc
+                        cd 40-eks
                         terraform init -reconfigure
                         terraform plan
                         """
@@ -28,27 +28,15 @@ pipeline {
             }
         }
         stage('Apply') {
-            input {
-                message "Should we continue?"
-                ok "Yes, we should."
-            }
             steps {
                 script {
                     withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                            cd 00-vpc
+                            cd 40-eks
                             terraform apply -auto-approve
                         """
                     }
                 }
-            }
-        }
-        stage('Trigger SG') {
-            when {
-                expression {params.Action == 'apply'}
-            }
-            steps {
-                build job: '10-sg', parameters: [string(name: 'ACTION', value: 'apply')], propagate: true
             }
         }
     }

@@ -7,7 +7,7 @@ pipeline {
     }
     options {
         disableConcurrentBuilds()
-        // timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         ansiColor('xterm')
     }
     parameters {
@@ -19,7 +19,7 @@ pipeline {
                 script{
                     withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                        cd 00-vpc
+                        cd 70-ingress-alb
                         terraform init -reconfigure
                         terraform plan
                         """
@@ -27,30 +27,40 @@ pipeline {
                 }
             }
         }
-        stage('Apply') {
-            input {
-                message "Should we continue?"
-                ok "Yes, we should."
-            }
+        stage('Apply or Destroy') {
             steps {
                 script {
                     withAWS(region: 'us-east-1', credentials: 'aws-creds') {
                         sh """
-                            cd 00-vpc
-                            terraform apply -auto-approve
+                            cd 70-ingress-alb
+                            if [ ${params.ACTION} == 'apply' ]
+                            then 
+                                terraform apply -auto-approve
+                            else
+                                terraform destroy -auto-approve
+                            fi
                         """
                     }
                 }
             }
         }
-        stage('Trigger SG') {
-            when {
-                expression {params.Action == 'apply'}
-            }
+        stage('Destroy Infra') {
             steps {
-                build job: '10-sg', parameters: [string(name: 'ACTION', value: 'apply')], propagate: true
+                script {
+                    withAWS(region: 'us-east-1', credentials: 'aws-creds') {
+                        def list = ["60-acm", "50-ecr", "40-eks", "30-rds", "20-bastion", "10-sg", "00-vpc"]
+                        for (item in list) {
+                            sh """
+                            cd $item
+                            terraform init -reconfigure
+                            terraform destroy -auto-approve
+                        """
+                        }  
+                    }
+                }
             }
-        }
+        }     
+
     }
     post {
         always {
