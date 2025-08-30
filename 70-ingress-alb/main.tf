@@ -21,8 +21,8 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-2016-08"
-#   certificate_arn   = local.ingress_alb_certificate_arn
-  certificate_arn   = "arn:aws:acm:us-east-1:904233121227:certificate/f48d2284-d7dc-4b3b-a4d9-c63b7c2e08f3"
+  certificate_arn   = local.ingress_alb_certificate_arn
+  # certificate_arn   = "arn:aws:acm:us-east-1:904233121227:certificate/f48d2284-d7dc-4b3b-a4d9-c63b7c2e08f3"
 
 
   default_action {
